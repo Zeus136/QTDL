@@ -8,7 +8,6 @@ def main_app():
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
 
-
     app = ctk.CTk()
     app.geometry('600x440')
     app.title("Đăng nhập")
@@ -19,20 +18,21 @@ def main_app():
     l1.pack()
 
     # Tạo khung chứa form đăng nhập
-    frame = ctk.CTkFrame(l1, width=302, height=325, corner_radius=15,bg_color="#242424")
+    frame = ctk.CTkFrame(l1, width=302, height=325, corner_radius=15, bg_color="#242424")
     frame.place(relx=0.5, rely=0.5, anchor=tk.CENTER)
 
     imglogin = ImageTk.PhotoImage(Image.open(r"D:\Study\HK I 2024\QTDL\Demo\assets\login.png"))
-    l2 = ctk.CTkLabel(frame, image=imglogin, text ="")
+    l2 = ctk.CTkLabel(frame, image=imglogin, text="")
     l2.place(x=135, y=20)
 
     imguser = ctk.CTkImage(Image.open(r"D:\Study\HK I 2024\QTDL\Demo\assets\user.png"), size=(20, 20))
-    l3 = ctk.CTkLabel(frame, image=imguser, text ="")
+    l3 = ctk.CTkLabel(frame, image=imguser, text="")
     l3.place(x=20, y=85)
     entry1 = ctk.CTkEntry(frame, width=220, placeholder_text="Username")
     entry1.place(x=50, y=85)
+
     imgpass = ctk.CTkImage(Image.open(r"D:\Study\HK I 2024\QTDL\Demo\assets\pass.png"), size=(20, 20))
-    l4 = ctk.CTkLabel(frame, image=imgpass, text ="")
+    l4 = ctk.CTkLabel(frame, image=imgpass, text="")
     l4.place(x=20, y=137)
     entry2 = ctk.CTkEntry(frame, width=220, placeholder_text="Password", show="*")
     entry2.place(x=50, y=140)
@@ -44,19 +44,19 @@ def main_app():
     hide_icon = ctk.CTkImage(Image.open(hide_icon_path), size=(14, 14))
 
     # Trạng thái ban đầu của mật khẩu (ẩn)
-    is_password_hidden = True
+    hidden = True
 
     # Hàm chuyển đổi ẩn/hiện mật khẩu
     def toggle_password_visibility():
-        global is_password_hidden
-        if is_password_hidden:
+        nonlocal hidden
+        if hidden:
             entry2.configure(show="")
             toggle_button.configure(image=hide_icon)
-            is_password_hidden = False
+            hidden = False
         else:
             entry2.configure(show="*")
             toggle_button.configure(image=show_icon)
-            is_password_hidden = True
+            hidden = True
 
     # Nút ẩn/hiện mật khẩu
     toggle_button = ctk.CTkButton(
@@ -71,7 +71,6 @@ def main_app():
     )
     toggle_button.place(x=270, y=142)
 
-
     # Tạo nhãn hiển thị lỗi cho tên đăng nhập và mật khẩu
     username_error_label = ctk.CTkLabel(frame, text="", font=("Century Gothic", 10), text_color="red", bg_color="transparent")
     username_error_label.place(x=50, y=112)
@@ -80,11 +79,6 @@ def main_app():
     password_error_label.place(x=50, y=167)
 
     # Hàm kiểm tra tính hợp lệ của đăng nhập
-    import tkinter as tk
-    import customtkinter as ctk
-    import mysql.connector
-    import bcrypt
-    
     def main(role, username):  # Add username parameter
         if role == "admin":
             import admin
@@ -95,12 +89,14 @@ def main_app():
 
     def check_login():
         # Xóa thông báo lỗi cũ
+        print("Starting check_login...")  # Debug print
         username_error_label.configure(text="")
         password_error_label.configure(text="")
 
         username = entry1.get()
         password = entry2.get()
-        
+        print("Username:", username, "Password:", password)  # Debug print
+
         # Kiểm tra thông tin
         valid = True
         if not username:
@@ -113,6 +109,7 @@ def main_app():
         if valid:
             # Kết nối đến cơ sở dữ liệu
             try:
+                print("Connecting to database...")  # Debug print
                 db = mysql.connector.connect(
                     host="localhost",
                     user="root",
@@ -121,29 +118,42 @@ def main_app():
                 )
                 cursor = db.cursor()
 
-                # Truy vấn để lấy mật khẩu đã mã hóa và vai trò của người dùng
-                cursor.execute("SELECT password, role FROM Users WHERE username = %s", (username,))
-                result = cursor.fetchone()
+                cursor.callproc("DangNhap", (username, password))
 
-                if result:
-                    hashed_password, role = result
-                    # So sánh mật khẩu đã nhập với mật khẩu đã lưu
-                    if bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8')):
-                        app.destroy()
-                        # Chuyển đến trang chính của ứng dụng
-                        main(role, username)  # Pass username
-                    else:
-                        password_error_label.configure(text="Tên đăng nhập hoặc mật khẩu không chính xác!")
+                # Đọc kết quả trả về của stored procedure
+                for result in cursor.stored_results():
+                    output = result.fetchall()
+                    print("Procedure result:", output)  # Debug print
+                    if output:
+                        role, thongBao = output[0]  # Lấy giá trị từ hàng đầu tiên
+                        print("Role:", role, "ThongBao:", thongBao)  # Debug print
+
+                # Xử lý kết quả đăng nhập
+                if thongBao == 'Đăng nhập thành công':
+                    print("Login successful")  # Debug print
+                    tk.messagebox.showinfo("Thông báo", "Đăng nhập thành công.")
+                    app.destroy()
+                    if role == "admin" or role == "NhanVien":
+                        import admin
+                        admin.main_app(username, role)
+                    elif role == "DocGia":
+                        import user
+                        user.main_app(username, role)
                 else:
-                    username_error_label.configure(text="Tên người dùng không tồn tại!")
+                    if thongBao == 'Tên đăng nhập không tồn tại':
+                        username_error_label.configure(text="Tên đăng nhập không tồn tại.")
+                    elif thongBao == 'Mật khẩu không đúng':
+                        password_error_label.configure(text="Mật khẩu không đúng.")
 
             except mysql.connector.Error as err:
-                print(f"Lỗi kết nối cơ sở dữ liệu: {err}")
-                tk.messagebox.showerror("Lỗi", "Không thể kết nối đến cơ sở dữ liệu.")
+                print(f"Database connection error: {err}")  # Debug print
+                tk.messagebox.showerror("Lỗi", f"Không thể kết nối đến cơ sở dữ liệu: {err}")
+                
             finally:
-                cursor.close()
-                db.close()
-
+                if db.is_connected():
+                    cursor.close()
+                    db.close()
+                    print("Database connection closed.")  # Debug print
 
     button1 = ctk.CTkButton(frame, text="Đăng nhập", width=220, height=40, command=check_login)
     button1.place(x=50, y=200)

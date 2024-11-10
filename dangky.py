@@ -67,7 +67,7 @@ def main_app():
 
     # Hàm chuyển đổi ẩn/hiện cho trường mật khẩu
     def toggle_password_visibility_1():
-        global is_password_hidden
+        nonlocal is_password_hidden
         if is_password_hidden:
             entry2.configure(show="*")
             toggle_button_1.configure(image=hide_icon)
@@ -78,7 +78,7 @@ def main_app():
 
     # Hàm chuyển đổi ẩn/hiện cho trường xác nhận mật khẩu
     def toggle_password_visibility_2():
-        global is_confirm_password_hidden
+        nonlocal is_confirm_password_hidden
         if is_confirm_password_hidden:
             entry3.configure(show="*")
             toggle_button_2.configure(image=hide_icon)
@@ -153,23 +153,24 @@ def main_app():
                 )
                 cursor = db.cursor()
 
-                # Kiểm tra tên đăng nhập đã tồn tại
-                cursor.execute("SELECT COUNT(*) FROM Users WHERE username = %s", (username,))
-                count = cursor.fetchone()[0]
+                cursor.callproc("DangKy", (username, password))
+                db.commit()
+                # Lấy kết quả trả về
+                for result in cursor.stored_results():
+                    output = result.fetchall()
+                    print("Procedure result:", output)  # Debug print
+                    if output:
+                        thongBao = output[0][0]  # Lấy thông báo từ hàng đầu tiên
+                        print("ThongBao:", thongBao)  # Debug print
 
-                if count > 0:
-                    username_error_label.configure(text="Tên đăng nhập đã tồn tại!")
-                    valid = False
-                else:
-                    # Mã hóa mật khẩu trước khi lưu
-                    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-                    # Thêm người dùng vào cơ sở dữ liệu
-                    cursor.execute("INSERT INTO Users (username, password, email, role) VALUES (%s, %s, %s, %s)",
-                                (username, hashed_password.decode('utf-8'), "example@example.com", "user"))  # Thay đổi email cho phù hợp
-                    db.commit()
-                    tk.messagebox.showinfo("Thành công", "Tài khoản đã được tạo thành công!")
-
+                        # Xử lý thông báo kết quả đăng ký
+                        if thongBao == 'Đăng ký thành công':
+                            print("User registered successfully!")
+                            tk.messagebox.showinfo("Thông báo", "Đăng ký thành công!")
+                        elif thongBao == 'Tên đăng nhập đã tồn tại':
+                            print("Username already exists!")
+                            tk.messagebox.showerror("Thông báo", "Tên đăng nhập đã tồn tại!")
+                        
             except mysql.connector.Error as err:
                 print(f"Lỗi: {err}")
                 tk.messagebox.showerror("Lỗi", "Không thể lưu thông tin người dùng vào cơ sở dữ liệu.")

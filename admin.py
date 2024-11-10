@@ -5,13 +5,14 @@ from PIL import Image, ImageTk
 import bcrypt
 import mysql.connector
 
-def main_app(username):  # Add username parameter
+def main_app(username, role):  # Add username parameter
     ctk.set_appearance_mode("system")
     ctk.set_default_color_theme("blue")
     
     app = ctk.CTk()
-    app.geometry('850x750')
+    app.geometry('930x700')
     app.title("Hệ thông quản lí thư viện") 
+    app.resizable(False, False)
     
     # Tạo thanh menu và thêm nút đăng xuất
     def logout():
@@ -32,13 +33,29 @@ def main_app(username):  # Add username parameter
     l1.pack(fill="both", expand=True)
     
     # Tải ảnh banner 
-    imgbanner = ctk.CTkImage(Image.open(r"D:\Study\HK I 2024\QTDL\Demo\assets\managerbanner.png"), size=(850, 125))
+    imgbanner = ctk.CTkImage(Image.open(r"D:\Study\HK I 2024\QTDL\Demo\assets\managerbanner.png"), size=(930, 125))
     l2 = ctk.CTkLabel(app, image=imgbanner, text="")
     l2.place(x=0, y=0)
     
-    # Frame to hold dynamic content
-    content_frame = ctk.CTkFrame(app, width=820, height=610, corner_radius=15, bg_color="#242424", fg_color="#242424")
-    content_frame.place(x=15, y=130)
+    # Create a canvas and a scrollbar for content_frame
+    canvas = tk.Canvas(app, width=1050, height=680, bg="#242424")
+    canvas.place(x=50,y=165)
+    
+    # Scrollbars for the canvas
+    scroll_y = tk.Scrollbar(app, orient="vertical", command=canvas.yview)
+    scroll_y.place(x=1100, y=165, height=685)
+    
+    # Configure canvas scrolling
+    canvas.configure(yscrollcommand=scroll_y.set)
+    
+    # Create the content frame
+    content_frame = ctk.CTkFrame(canvas, width=1200, height=800, corner_radius=15, bg_color="#242424", fg_color="#242424")
+    canvas.create_window((0, 0), window=content_frame, anchor="nw")
+    
+    def on_frame_configure(event):
+        canvas.configure(scrollregion=canvas.bbox("all"))
+    
+    content_frame.bind("<Configure>", on_frame_configure)
     
     # Functions to update content frame
     def switch_to_author_management():
@@ -54,13 +71,13 @@ def main_app(username):  # Add username parameter
             )
             mycursor = mydb.cursor()
             if combobox.get() == "Mã Tác Giả":
-                mycursor.execute("SELECT * FROM TacGia WHERE MaTG = %s", (search_entry.get(),))
+                mycursor.execute("SELECT * FROM TacGia WHERE MaTG LIKE %s", ('%'+search_entry.get()+'%',))
             elif combobox.get() == "Tên Tác Giả":
-                mycursor.execute("SELECT * FROM TacGia WHERE TenTG = %s", (search_entry.get(),))
+                mycursor.execute("SELECT * FROM TacGia WHERE TenTG LIKE %s", ('%'+search_entry.get()+'%',))
             elif combobox.get() == "Website":
-                mycursor.execute("SELECT * FROM TacGia WHERE Website = %s", (search_entry.get(),))
+                mycursor.execute("SELECT * FROM TacGia WHERE Website LIKE %s", ('%'+search_entry.get()+'%',))
             elif combobox.get() == "Ghi Chú":
-                mycursor.execute("SELECT * FROM TacGia WHERE GhiChu = %s", (search_entry.get(),))
+                mycursor.execute("SELECT * FROM TacGia WHERE GhiChu LIKE %s", ('%'+search_entry.get()+'%',))
             myresult = mycursor.fetchall()
             # xóa dữ liệu cũ trong bảng
             for i in table.get_children():
@@ -93,6 +110,8 @@ def main_app(username):  # Add username parameter
         search_button.place(x=570, y=60)
         
         # Hàm lấy tất cả tác giả
+  
+  
         def show_all_author():
             # Lấy dữ liệu từ MySQL và hiển thị lên bảng
             # Kết nối đến cơ sở dữ liệu
@@ -141,16 +160,16 @@ def main_app(username):  # Add username parameter
         show_all_author()
         
         #Tạo frame hiển thị thông tin tác giả
-        info_frame = ctk.CTkFrame(content_frame, width=350, height=300, corner_radius=15, bg_color="#242424", fg_color="white")
+        info_frame = ctk.CTkFrame(content_frame, width=350, height=300, corner_radius=15, bg_color="#242424", fg_color="#242424")
         info_frame.place(x=95, y=300)
         
         #Tạo label và ô hiển thị thông tin tương ứng của tác giả
-        label = ctk.CTkLabel(info_frame, text="Thông tin tác giả", font=("Century Gothic", 20), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Thông tin tác giả", font=("Century Gothic", 20), text_color="#ffffff")
         label.pack(pady=20)
         label.place(x=95, y=10)
         
         #Tạo label và ô hiển thị mã tác giả
-        label = ctk.CTkLabel(info_frame, text="Mã tác giả", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Mã tác giả", font=("Century Gothic", 15), text_color="#ffffff")
         label.pack(pady=10)
         label.place(x=10, y=40)
         maTG_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
@@ -158,7 +177,7 @@ def main_app(username):  # Add username parameter
         maTG_entry.place(x=10, y=70)
         
         #Tạo label và ô hiển thị tên tác giả
-        label = ctk.CTkLabel(info_frame, text="Tên tác giả", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Tên tác giả", font=("Century Gothic", 15), text_color="#ffffff")
         label.pack(pady=10)
         label.place(x=10, y=100)
         tenTG_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
@@ -166,7 +185,7 @@ def main_app(username):  # Add username parameter
         tenTG_entry.place(x=10, y=130)
         
         #Tạo label và ô hiển thị website
-        label = ctk.CTkLabel(info_frame, text="Website", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Website", font=("Century Gothic", 15), text_color="#ffffff")
         label.pack(pady=10)
         label.place(x=10, y=160)
         website_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
@@ -174,7 +193,7 @@ def main_app(username):  # Add username parameter
         website_entry.place(x=10, y=190)
         
         #Tạo label và ô hiển thị ghi chú
-        label = ctk.CTkLabel(info_frame, text="Ghi chú", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Ghi chú", font=("Century Gothic", 15), text_color="#ffffff")
         label.pack(pady=10)
         label.place(x=10, y=220)
         ghiChu_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
@@ -293,7 +312,7 @@ def main_app(username):  # Add username parameter
         reset_button.place(x=0, y=80)
         
         #Tạo frame chứa các nút xuất báo cáo thông kê
-        report_frame = ctk.CTkFrame(content_frame, width=300, height=150, corner_radius=15, bg_color="#242424", fg_color="white")
+        report_frame = ctk.CTkFrame(content_frame, width=300, height=150, corner_radius=15, bg_color="#242424", fg_color="#242424") 
         report_frame.place(x=470, y=420)
         
         #Thêm nút xuất báo cáo tác giả và chức năng xuất ra file excel số tác phẩm theo tác giả
@@ -311,10 +330,13 @@ def main_app(username):  # Add username parameter
             )
             return file_path
 
-        def report_author():
+        # Function to generate report based on selected report type
+        def generate_report():
+            report_type = report_type_combobox.get()
             file_path = select_save_location()
+            
             if file_path:
-                # Kết nối đến cơ sở dữ liệu
+                # Connect to the MySQL database
                 mydb = mysql.connector.connect(
                     host="localhost",
                     user="root",
@@ -322,40 +344,103 @@ def main_app(username):  # Add username parameter
                     database="QLThuVien"
                 )
                 mycursor = mydb.cursor()
-                # Truy vấn dữ liệu với tên rõ ràng cho cột đếm
-                mycursor.execute("""
-                    SELECT TacGia.MaTG, TacGia.TenTG, COUNT(Sach.MaTG) AS SoLuongSach
-                    FROM TacGia 
-                    JOIN Sach ON TacGia.MaTG = Sach.MaTG 
-                    GROUP BY TacGia.MaTG
-                """)
+                
+                # Choose query based on selected report type
+                if report_type == "Báo cáo Sách theo Tác Giả":
+                    query = """
+                        SELECT Sach.MaSach, Sach.TenSach, TacGia.TenTG
+                        FROM Sach
+                        JOIN TacGia ON Sach.MaTG = TacGia.MaTG
+                        ORDER BY TacGia.TenTG
+                    """
+                    headers = ["Mã Sách", "Tên Sách", "Tác Giả"]
+                
+                elif report_type == "Báo cáo Sách theo Nhà Xuất Bản":
+                    query = """
+                        SELECT Sach.MaSach, Sach.TenSach, NhaXuatBan.TenNXB
+                        FROM Sach
+                        JOIN NhaXuatBan ON Sach.MaNXB = NhaXuatBan.MaNXB
+                        ORDER BY NhaXuatBan.TenNXB
+                    """
+                    headers = ["Mã Sách", "Tên Sách", "Nhà Xuất Bản"]
+                
+                elif report_type == "Báo cáo Sách theo Thể Loại":
+                    query = """
+                        SELECT Sach.MaSach, Sach.TenSach, TheLoai.TenTL
+                        FROM Sach
+                        JOIN TheLoai ON Sach.MaTL = TheLoai.MaTL
+                        ORDER BY TheLoai.TenTL
+                    """
+                    headers = ["Mã Sách", "Tên Sách", "Thể Loại"]
+                
+                elif report_type == "Danh Sách Tất Cả Sách":
+                    query = """
+                        SELECT MaSach, TenSach, MaTG, MaTL, MaNXB, NamXB, SoLuong
+                        FROM Sach
+                    """
+                    headers = ["Mã Sách", "Tên Sách", "Mã Tác Giả", "Mã Thể Loại", "Mã NXB", "Năm XB", "Số Lượng"]
+                
+                else:
+                    tk.messagebox.showwarning("Warning", "Vui lòng chọn thể loại báo cáo!")
+                    return
+                
+                # Execute query and fetch data
+                mycursor.execute(query)
                 myresult = mycursor.fetchall()
 
-                # Tạo file Excel với openpyxl
+                # Create Excel workbook and write data
                 workbook = openpyxl.Workbook()
                 worksheet = workbook.active
-                worksheet.title = "Báo cáo Tác Giả"
+                worksheet.title = report_type
 
-                # Tạo header cho file Excel
-                headers = ["Mã Tác Giả", "Tên Tác Giả", "Số Tác Phẩm"]
+                # Write headers to Excel sheet
                 worksheet.append(headers)
 
-                # Ghi dữ liệu vào file Excel
-                for result in myresult:
-                    worksheet.append(result)
+                # Write rows to Excel sheet
+                for row in myresult:
+                    worksheet.append(row)
 
-                # Lưu và đóng file Excel
+                # Save Excel file
                 workbook.save(file_path)
-
-                # Đóng kết nối database
+                
+                # Close database connection
                 mydb.close()
+                tk.messagebox.showinfo("Success", f"{report_type} đã được xuất thành công!")
 
-        # Tạo nút để xuất báo cáo
-        report_button = ctk.CTkButton(report_frame, text="Xuất báo cáo tác giả", width=150, command=report_author)
-        report_button.place(x=75, y=0)
+        # Add ComboBox for report type selection
+        report_types = ["Báo cáo Sách theo Tác Giả", "Báo cáo Sách theo Nhà Xuất Bản", "Báo cáo Sách theo Thể Loại", "Danh Sách Tất Cả Sách"]
+        report_type_combobox = ctk.CTkComboBox(
+            report_frame, values=report_types, state="readonly",
+            bg_color="#242424", border_color="#bcd5e8", corner_radius=10,
+            button_color="#bcd5e8", button_hover_color="#60797d",
+            dropdown_fg_color="#bcd5e8", dropdown_hover_color="#60797d",
+            width=200
+        )
+        report_type_combobox.set("Chọn loại báo cáo")
+        report_type_combobox.place(x=50, y=20)
 
-    
+        # Add button to generate report
+        report_button = ctk.CTkButton(report_frame, text="Xuất báo cáo", width=150, command=generate_report)
+        report_button.place(x=75, y=80)
+   
     def switch_to_publisher_management():
+        def execute_query(query, params=None):
+            try:
+                with mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="130603",
+                    database="QLThuVien"
+                ) as mydb:
+                    cursor = mydb.cursor()
+                    cursor.execute(query, params or ())
+                    return cursor.fetchall()
+            except mysql.connector.Error as err:
+                messagebox.showerror("Database Error", f"Lỗi cơ sở dữ liệu: {err}")
+                return None
+            
+        sort_direction = {"AZ": "ASC", "ZA": "DESC"}
+        
         def search_publisher(search_entry, combobox):
             mydb = mysql.connector.connect(
                 host="localhost",
@@ -625,39 +710,87 @@ def main_app(username):  # Add username parameter
         report_button.place(x=75, y=0)
 
     def switch_to_book_management():
-        def search_book(search_entry, combobox):
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="130603",
-                database="QLThuVien"
-            )
-            mycursor = mydb.cursor()
-            if combobox.get() == "Mã Sách":
-                mycursor.execute("SELECT * FROM Sach WHERE MaSach = %s", (search_entry.get(),))
-            elif combobox.get() == "Tên Sách":
-                mycursor.execute("SELECT * FROM Sach WHERE TenSach = %s", (search_entry.get(),))
-            elif combobox.get() == "Mã Tác Giả":
-                mycursor.execute("SELECT * FROM Sach WHERE MaTG = %s", (search_entry.get(),))
-            elif combobox.get() == "Mã Thể Loại":
-                mycursor.execute("SELECT * FROM Sach WHERE MaTL = %s", (search_entry.get(),))
-            elif combobox.get() == "Mã NXB":
-                mycursor.execute("SELECT * FROM Sach WHERE MaNXB = %s", (search_entry.get(),))
-            myresult = mycursor.fetchall()
-            for i in table.get_children():
-                table.delete(i)
-            for row in myresult:
-                table.insert("", "end", values=row)
-            mydb.close()
+        # Function to execute query and return results
+        def search_book(search_entry, combobox, table):
+            try:
+                # Establish a database connection
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="130603",
+                    database="qltv"
+                )
+                mycursor = mydb.cursor()
 
-        def add_book():
-            pass
+                # Prepare search value with wildcards
+                search_value = '%' + search_entry.get() + '%'
 
+                # Define the search query based on combobox selection
+                query = ""
+                if combobox.get() == "Mã Sách":
+                    query = "SELECT * FROM Sach WHERE MaSach LIKE %s"
+                elif combobox.get() == "Tên Sách":
+                    query = "SELECT * FROM Sach WHERE TenSach LIKE %s"
+                elif combobox.get() == "Mã Tác Giả":
+                    query = "SELECT * FROM Sach WHERE MaTG LIKE %s"
+                elif combobox.get() == "Mã Thể Loại":
+                    query = "SELECT * FROM Sach WHERE MaTL LIKE %s"
+                elif combobox.get() == "Mã NXB":
+                    query = "SELECT * FROM Sach WHERE MaNXB LIKE %s"
+                elif combobox.get() == "Năm XB":
+                    query = "SELECT * FROM Sach WHERE NamXB LIKE %s"
+
+                # Execute the query with the search value
+                mycursor.execute(query, (search_value,))
+                results = mycursor.fetchall()  # Fetch all results to clear the cursor
+
+                # Clear the table before inserting new data
+                for row in table.get_children():
+                    table.delete(row)
+
+                # Insert search results into the table
+                for result in results:
+                    table.insert("", "end", values=result)
+
+            except mysql.connector.Error as err:
+                messagebox.showerror("Database Error", f"Lỗi cơ sở dữ liệu: {err}")
+
+            finally:
+                # Close cursor and database connection if open
+                if 'mycursor' in locals():
+                    mycursor.close()
+                if 'mydb' in locals() and mydb.is_connected():
+                    mydb.close()
+                    
+        # show all books in the database
+        def show_all_books():
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    username="root",
+                    password="130603",
+                    database="qltv"
+                )
+                mycursor = mydb.cursor()
+                mycursor.execute("SELECT * FROM Sach")
+                results = mycursor.fetchall()
+                for row in table.get_children():
+                    table.delete(row)
+                for result in results:
+                    table.insert("", "end", values=result)
+            except mysql.connector.Error as err:
+                messagebox.showerror("Database Error", f"Lỗi cơ sở dữ liệu: {err}")
+            finally:
+                if mycursor:
+                    mycursor.close()
+                if mydb:
+                    mydb.close()
+                    
         label = ctk.CTkLabel(content_frame, text="Quản lí sách", font=("Century Gothic", 20), text_color="white")
         label.pack(pady=20)
         label.place(x=340, y=10)
 
-        sach = ["Mã Sách", "Tên Sách", "Mã Tác Giả", "Mã Thể Loại", "Mã NXB"]
+        sach = ["Mã Sách", "Tên Sách", "Mã Tác Giả", "Mã Thể Loại", "Mã NXB", "Năm XB"]
         combobox = ctk.CTkComboBox(content_frame, values=sach, bg_color="#242424", border_color="#bcd5e8", corner_radius=10, button_color="#bcd5e8", button_hover_color="#60797d", dropdown_fg_color="#bcd5e8", dropdown_hover_color="#60797d", width=150, state="readonly")
         combobox.place(x=100, y=60)
         combobox.set("Tìm kiếm bằng")
@@ -665,93 +798,99 @@ def main_app(username):  # Add username parameter
         search_entry.pack(pady=20)
         search_entry.place(x=260, y=60)
 
-        search_button = ctk.CTkButton(content_frame, text="Tìm kiếm", width=50, command=lambda: search_book(search_entry, combobox))
+        search_button = ctk.CTkButton(content_frame, text="Tìm kiếm", width=50, command=lambda: search_book(search_entry, combobox, table))
         search_button.pack(pady=20)
         search_button.place(x=570, y=60)
 
-        def show_all_books():
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="130603",
-                database="QLThuVien"
-            )
-            mycursor = mydb.cursor()
-            mycursor.execute("SELECT * FROM Sach")
-            myresult = mycursor.fetchall()
-            for i in table.get_children():
-                table.delete(i)
-            for row in myresult:
-                table.insert("", "end", values=row)
-            mydb.close()
-
+                
         show_all_button = ctk.CTkButton(content_frame, text="Hiển thị tất cả", width=50, command=show_all_books)
         show_all_button.pack(pady=20)
         show_all_button.place(x=650, y=60)
 
-        columns = ("Mã Sách", "Tên Sách", "Mã Tác Giả", "Mã Thể Loại", "Mã NXB", "Năm XB")
-        table = ttk.Treeview(content_frame, columns=columns, show="headings", height=11)
-        table.place(x=117, y=120)
+        # Set up the table frame
+        table_frame = ctk.CTkFrame(content_frame, width=700, fg_color = "#242424")
+        table_frame.place(x=60, y=100)
+
+        # Define columns for the table
+        columns = ("Mã Sách", "Tên Sách", "Mã Tác Giả", "Mã Thể Loại", "Mã NXB", "Năm XB", "Số Lượng", "Số lượng còn lại")
+        table = ttk.Treeview(table_frame, columns=columns, show="headings", height=11)
+        table.place(x=0, y=0)
+
+        # Set up column headings and widths
         for col in columns:
             table.heading(col, text=col)
-        table.column("Mã Sách", width=100)
-        table.column("Năm XB", width=100)
-        for col in columns:
             table.column(col, anchor="center")
 
-        scroll = ttk.Scrollbar(content_frame, orient="vertical", command=table.yview)
-        scroll.place(x=920, y=120, height=247)
-        table.configure(yscrollcommand=scroll.set)
-        show_all_books()
+        # Customize widths for each column based on content
+        table.column("Mã Sách", width=80)            # Reduced width for compact ID display
+        table.column("Tên Sách", width=250)           # Increased width for longer book names
+        table.column("Mã Tác Giả", width=90)          # Reduced slightly
+        table.column("Mã Thể Loại", width=90)         # Reduced slightly
+        table.column("Mã NXB", width=90)              # Reduced slightly
+        table.column("Năm XB", width=80)              # Smaller width for year
+        table.column("Số Lượng", width=90)            # Standard width for quantity
+        table.column("Số lượng còn lại", width=110)   # Slightly wider for better visibility
 
-        info_frame = ctk.CTkFrame(content_frame, width=350, height=300, corner_radius=15, bg_color="#242424", fg_color="white")
+        scroll = ttk.Scrollbar(content_frame, orient="vertical", command=table.yview)
+        scroll.place(x=955, y=125, height=247)
+        table.configure(yscrollcommand=scroll.set)
+        
+        info_frame = ctk.CTkFrame(content_frame, width=350, height=600, corner_radius=15, bg_color="#242424", fg_color="#242424")
         info_frame.place(x=95, y=300)
 
-        label = ctk.CTkLabel(info_frame, text="Thông tin sách", font=("Century Gothic", 20), text_color="black")
+        show_all_books()
+        label = ctk.CTkLabel(info_frame, text="Thông tin sách", font=("Century Gothic", 20), text_color="white")
         label.pack(pady=20)
         label.place(x=95, y=10)
 
-        label = ctk.CTkLabel(info_frame, text="Mã Sách", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Mã Sách", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=40)
         maSach_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         maSach_entry.pack(pady=10)
         maSach_entry.place(x=10, y=70)
 
-        label = ctk.CTkLabel(info_frame, text="Tên Sách", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Tên Sách", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=100)
         tenSach_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         tenSach_entry.pack(pady=10)
         tenSach_entry.place(x=10, y=130)
 
-        label = ctk.CTkLabel(info_frame, text="Mã Tác Giả", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Mã Tác Giả", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=160)
         maTG_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         maTG_entry.pack(pady=10)
         maTG_entry.place(x=10, y=190)
 
-        label = ctk.CTkLabel(info_frame, text="Mã Thể Loại", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Mã Thể Loại", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=220)
         maTL_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         maTL_entry.pack(pady=10)
         maTL_entry.place(x=10, y=250)
 
-        label = ctk.CTkLabel(info_frame, text="Mã NXB", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Mã NXB", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=280)
         maNXB_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         maNXB_entry.pack(pady=10)
         maNXB_entry.place(x=10, y=310)
 
-        label = ctk.CTkLabel(info_frame, text="Năm XB", font=("Century Gothic", 15), text_color="black")
+        label = ctk.CTkLabel(info_frame, text="Năm XB", font=("Century Gothic", 15), text_color="white")
         label.pack(pady=10)
         label.place(x=10, y=340)
         namXB_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
         namXB_entry.pack(pady=10)
         namXB_entry.place(x=10, y=370)
+        
+        label = ctk.CTkLabel(info_frame, text="Số Lượng", font=("Century Gothic", 15), text_color="white")
+        label.pack(pady=10)
+        label.place(x=10, y=400)
+        soLuong_entry = ctk.CTkEntry(info_frame, width=320, placeholder_text="")
+        soLuong_entry.pack(pady=10)
+        soLuong_entry.place(x=10, y=430)
 
         def on_click(event):
             item = table.selection()[0]
@@ -761,60 +900,107 @@ def main_app(username):  # Add username parameter
             maTL_entry.delete(0, "end")
             maNXB_entry.delete(0, "end")
             namXB_entry.delete(0, "end")
+            soLuong_entry.delete(0, "end")
             maSach_entry.insert(0, table.item(item, "values")[0])
             tenSach_entry.insert(0, table.item(item, "values")[1])
             maTG_entry.insert(0, table.item(item, "values")[2])
             maTL_entry.insert(0, table.item(item, "values")[3])
             maNXB_entry.insert(0, table.item(item, "values")[4])
             namXB_entry.insert(0, table.item(item, "values")[5])
+            soLuong_entry.insert(0, table.item(item, "values")[6])
 
         table.bind("<ButtonRelease-1>", on_click)
 
         button_frame = ctk.CTkFrame(content_frame, width=300, height=120, corner_radius=15, bg_color="#242424", fg_color="#242424")
-        button_frame.place(x=500, y=300)
+        button_frame.place(x=500, y=350)
 
         def add_book():
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="130603",
-                database="QLThuVien"
-            )
-            mycursor = mydb.cursor()
-            if not maSach_entry.get() or not tenSach_entry.get() or not maTG_entry.get() or not maTL_entry.get() or not maNXB_entry.get() or not namXB_entry.get():
-                tk.messagebox.showwarning("Warning", "Vui lòng nhập đủ thông tin!")
-            else:
-                try:
-                    mycursor.execute("INSERT INTO Sach (MaSach, TenSach, MaTG, MaTL, MaNXB, NamXB) VALUES (%s, %s, %s, %s, %s, %s)", (maSach_entry.get(), tenSach_entry.get(), maTG_entry.get(), maTL_entry.get(), maNXB_entry.get(), namXB_entry.get()))
-                    mydb.commit()
-                    tk.messagebox.showinfo("Success", "Thêm sách thành công!")
-                    show_all_books()
-                except mysql.connector.IntegrityError:
-                    tk.messagebox.showwarning("Warning", "Mã sách đã tồn tại!")
-            mydb.close()
+            try:
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="130603",
+                    database="qltv"
+                )
+                mycursor = mydb.cursor()
+                mycursor.callproc('ThemSach', [
+                    maSach_entry.get(),
+                    tenSach_entry.get(),
+                    maTG_entry.get(),
+                    maTL_entry.get(),
+                    maNXB_entry.get(),
+                    namXB_entry.get(),
+                    soLuong_entry.get()
+                ])
+                mydb.commit()
+                messagebox.showinfo("Success", "Thêm sách thành công!")
+                show_all_books()
+            except mysql.connector.Error as err:
+                if err.errno == 1644:
+                    messagebox.showerror("Database Error", "Mã sách đã tồn tại!")
+                else:
+                    messagebox.showerror("Database Error", f"Lỗi cơ sở dữ liệu: {err}")
+            finally:
+                if mycursor:
+                    mycursor.close()
+                if mydb:
+                    mydb.close()
         add_button = ctk.CTkButton(button_frame, text="Thêm", width=100, command=add_book)
         add_button.pack(pady=30)
         add_button.place(x=0, y=25)
 
         def update_book():
-            mydb = mysql.connector.connect(
-                host="localhost",
-                user="root",
-                password="130603",
-                database="QLThuVien"
-            )
-            mycursor = mydb.cursor()
-            if not maSach_entry.get() or not tenSach_entry.get() or not maTG_entry.get() or not maTL_entry.get() or not maNXB_entry.get() or not namXB_entry.get():
-                tk.messagebox.showwarning("Warning", "Vui lòng nhập đầy đủ thông tin sách cần cập nhật!")
-            else:
-                try:
-                    mycursor.execute("UPDATE Sach SET TenSach = %s, MaTG = %s, MaTL = %s, MaNXB = %s, NamXB = %s WHERE MaSach = %s", (tenSach_entry.get(), maTG_entry.get(), maTL_entry.get(), maNXB_entry.get(), namXB_entry.get(), maSach_entry.get()))
-                    mydb.commit()
-                    tk.messagebox.showinfo("Success", "Cập nhật thông tin sách thành công!")
-                    show_all_books()
-                except mysql.connector.IntegrityError:
-                    tk.messagebox.showwarning("Warning", "Mã sách không tồn tại!")
-            mydb.close()
+            try:
+                # Chuyển đổi năm xuất bản và tổng số lượng thành số nguyên
+                nam_xb = int(namXB_entry.get())
+                tong_so_luong = int(soLuong_entry.get())
+                
+                # Kết nối đến cơ sở dữ liệu
+                mydb = mysql.connector.connect(
+                    host="localhost",
+                    user="root",
+                    password="130603",
+                    database="qltv"
+                )
+                mycursor = mydb.cursor()
+
+                # Gọi stored procedure SuaSach với các tham số cập nhật
+                mycursor.callproc('SuaSach', [
+                    maSach_entry.get(),
+                    tenSach_entry.get(),
+                    maTG_entry.get(),
+                    maTL_entry.get(),
+                    maNXB_entry.get(),
+                    nam_xb,         # Chuyển đổi thành số nguyên
+                    tong_so_luong   # Chuyển đổi thành số nguyên
+                ])
+                mydb.commit()
+
+                # Thông báo cập nhật thành công
+                messagebox.showinfo("Success", "Cập nhật sách thành công!")
+                show_all_books()
+            
+            except ValueError:
+                # Xử lý lỗi nếu chuyển đổi giá trị không thành công
+                messagebox.showerror("Input Error", "Vui lòng nhập số hợp lệ cho Năm XB và Tổng Số Lượng.")
+            
+            except mysql.connector.Error as err:
+                # Kiểm tra thông báo lỗi thay vì errno
+                error_message = str(err)
+                if "Sách không tồn tại trong hệ thống" in error_message:
+                    messagebox.showerror("Database Error", "Mã sách không tồn tại!")
+                elif "Tổng số lượng sách không thể nhỏ hơn số lượng sách đang cho mượn" in error_message:
+                    messagebox.showerror("Database Error", "Tổng số lượng sách không thể nhỏ hơn số lượng sách đang cho mượn hoặc đã được xác nhận!")
+                else:
+                    messagebox.showerror("Database Error", f"Lỗi cơ sở dữ liệu: {err}")
+
+            finally:
+                # Đảm bảo đóng kết nối và con trỏ nếu được tạo
+                if 'mycursor' in locals() and mycursor:
+                    mycursor.close()
+                if 'mydb' in locals() and mydb.is_connected():
+                    mydb.close()
+                    
         update_button = ctk.CTkButton(button_frame, text="Cập nhật", width=100, command=update_book)
         update_button.pack(pady=30)
         update_button.place(x=140, y=25)
@@ -824,21 +1010,29 @@ def main_app(username):  # Add username parameter
                 host="localhost",
                 user="root",
                 password="130603",
-                database="QLThuVien"
+                database="qltv"
             )
             mycursor = mydb.cursor()
             if not maSach_entry.get():
                 tk.messagebox.showwarning("Warning", "Vui lòng nhập mã sách cần xóa!")
             else:
                 try:
-                    mycursor.execute("DELETE FROM Sach WHERE MaSach = %s", (maSach_entry.get(),))
+                    mycursor.callproc('XoaSach', [maSach_entry.get()])
                     mydb.commit()
                     tk.messagebox.showinfo("Success", "Xóa sách thành công!")
                     show_all_books()
-                except mysql.connector.IntegrityError:
-                    tk.messagebox.showwarning("Warning", "Mã sách không tồn tại!")
-            mydb.close()
-            reset_info()
+                except mysql.connector.Error as err:
+                    if err.errno == 1644:
+                        if "Sách đang được mượn" in str(err):
+                            tk.messagebox.showwarning("Warning", "Sách đang được mượn! Bạn không thể xóa sách này!")
+                        else:
+                            tk.messagebox.showwarning("Warning", "Mã sách không tồn tại!")
+                finally:
+                    if mycursor:
+                        mycursor.close()
+                    if mydb:
+                        mydb.close()
+                        
         delete_button = ctk.CTkButton(button_frame, text="Xóa", width=100, command=delete_book)
         delete_button.pack(pady=30)
         delete_button.place(x=140, y=80)
@@ -854,8 +1048,8 @@ def main_app(username):  # Add username parameter
         reset_button.pack(pady=30)
         reset_button.place(x=0, y=80)
 
-        report_frame = ctk.CTkFrame(content_frame, width=300, height=150, corner_radius=15, bg_color="#242424", fg_color="white")
-        report_frame.place(x=470, y=420)
+        report_frame = ctk.CTkFrame(content_frame, width=300, height=150, corner_radius=15, bg_color="#242424", fg_color="#00ac47")
+        report_frame.place(x=470, y=500)
 
         from tkinter import filedialog
         import openpyxl
@@ -902,7 +1096,7 @@ def main_app(username):  # Add username parameter
                 mydb.close()
 
         report_button = ctk.CTkButton(report_frame, text="Xuất báo cáo sách", width=150, command=report_book)
-        report_button.place(x=75, y=0)
+        report_button.place(x=75, y=20)
 
     def switch_to_borrow_return_management():
         label = ctk.CTkLabel(content_frame, text="Quản lí mượn trả sách", font=("Century Gothic", 20))
@@ -1178,9 +1372,16 @@ def main_app(username):  # Add username parameter
             switch_to_borrow_return_management()
         elif choice == "Quản lí nhân viên":
             switch_to_staff_management()
+        elif choice == "Quản lí tài khoản":
+            switch_to_account_management()
+        elif choice == "Quản lí thông tin cá nhân":
+            switch_to_personal_info()
 
     # Tạo combobox
-    options = ["Quản lí tác giả", "Quản lí nhà sản xuất", "Quản lí sách", "Quản lí mượn trả sách", "Quản lí nhân viên"]
+    if role == "Admin":
+        options = ["Quản lí nhân viên", "Quản lí tài khoản"]
+    else:
+        options = ["Quản lí sách","Quản lí tác giả", "Quản lí nhà sản xuất", "Quản lí thể loại",  "Quản lí mượn trả sách", "Quản lí thẻ thư viện", "Quản lí đọc giả", "Quản lí thông tin cá nhân"]
     combobox = ctk.CTkComboBox(
         app, values=options, 
         command=on_combobox_select, 
@@ -1191,13 +1392,13 @@ def main_app(username):  # Add username parameter
         button_hover_color="#60797d",
         dropdown_fg_color="#bcd5e8",
         dropdown_hover_color="#60797d",
-        width=150
+        width=170
     )
     combobox.place(x=0, y=97)
-    combobox.set("Quản lí tác giả")
-    on_combobox_select("Quản lí tác giả")  
+    combobox.set(options[0])
+    on_combobox_select(options[0])  
     
     app.mainloop()
 
 if __name__ == "__main__":
-    main_app(username="admin")  # Add username parameter
+    main_app(username="admin", role = "NhanVien")  # Add username parameter
